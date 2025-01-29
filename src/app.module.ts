@@ -8,15 +8,15 @@ import { RouterModule, Routes } from '@nestjs/core';
 
 const routes: Routes = [
   {
-    path: 'api/user',
+    path: 'api/',
     module: UsersModule,
   },
   {
-    path: 'api/todo',
+    path: 'api/',
     module: TodoModule,
   },
   {
-    path: 'api/workspace',
+    path: 'api/',
     module: WorkspaceModule,
   }
 ]
