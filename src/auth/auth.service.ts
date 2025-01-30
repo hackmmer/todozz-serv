@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { IUser } from 'src/users/entities/user.entity';
+import { IUser, User } from 'src/users/entities/user.entity';
+import { DbUser } from 'src/users/schemas/user.schema';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -11,7 +12,7 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {
-    const u = this.usersService.findOne(username);
+    const u = await this.usersService.findOne(username);
     if (!u) return null;
     if (pass === u.password) {
       const { password, ...result } = u;
@@ -29,9 +30,9 @@ export class AuthService {
       session: this.jwtService.sign(payload),
       user,
     };
-    this.usersService.sessions.push({
-      session: res.session,
-      userId: res.user._id,
+    await this.usersService.createSession({
+      key: res.session,
+      user: res.user._id,
     });
 
     return res;
@@ -39,10 +40,28 @@ export class AuthService {
 
   async logout(session: string) {
     const key = session.replace('Bearer ', '');
-    const i = this.usersService.sessions.findIndex((e) => e.session === key);
-    this.usersService.sessions.splice(i, 1);
+    await this.usersService.deleteSession({ key });
     return true;
   }
 
-  register() {}
+  async register(user: IUser | any) {
+    const u = await this.usersService.create(user);
+
+    const payload = {
+      username: u.username,
+      sub: u._id,
+    };
+
+    const session = {
+      key: this.jwtService.sign(payload),
+      user,
+    };
+
+    await this.usersService.createSession({
+      key: session.key,
+      user: u,
+    });
+
+    return session;
+  }
 }

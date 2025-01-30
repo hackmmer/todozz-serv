@@ -6,11 +6,10 @@ import { merge } from 'lodash';
 
 @Injectable()
 export class TodoService {
-
   todos: Todo[] = [];
 
   create(createTodoDto: CreateTodoDto) {
-    return this.todos.push(new Todo(createTodoDto))
+    return this.todos.push(new Todo(createTodoDto));
   }
 
   findAll() {
@@ -18,17 +17,17 @@ export class TodoService {
   }
 
   findOne(id: string) {
-    return this.todos.find(e => e._id === id);
+    return this.todos.find((e) => e._id === id);
   }
 
   update(id: string, updateTodoDto: UpdateTodoDto) {
-    const i = this.todos.findIndex(e => e._id === id)
-    merge(this.todos[i], updateTodoDto)
+    const i = this.todos.findIndex((e) => e._id === id);
+    merge(this.todos[i], updateTodoDto);
     return this.todos[i];
   }
 
   remove(id: string) {
-    const i = this.todos.findIndex(e => e._id === id)
+    const i = this.todos.findIndex((e) => e._id === id);
     const u = this.todos.slice(i, i);
     return u;
   }

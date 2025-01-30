@@ -2,16 +2,22 @@ import { merge } from 'lodash';
 import { IWorkspace, Workspace } from 'src/workspace/entities/workspace.entity';
 
 export interface IUser {
-  _id: string;
+  _id?: string | any;
   profile_image?: string;
   name: string;
   username: string;
   password: string;
   workspaces: IWorkspace[];
+  sessions?: string[];
+}
+
+export interface ISession {
+  key: string;
+  user?: IUser;
 }
 
 export class User implements IUser {
-  _id: string;
+  _id?: string;
   profile_image?: string;
   name: string;
   username: string;
@@ -24,12 +30,12 @@ export class User implements IUser {
 
   private _getDefaults(): IUser {
     return {
-      _id: '',
       profile_image: '',
       name: '',
       username: '',
       password: '',
       workspaces: [],
+      sessions: [],
     };
   }
 }

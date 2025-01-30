@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { environment } from './environments/environment';
 
 const httpsOptions = {
   key: fs.readFileSync('./ssl/server.key'),
@@ -12,11 +13,7 @@ async function bootstrap() {
     httpsOptions,
   });
 
-  app.enableCors({
-    origin: 'https://localhost:4200',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
+  app.enableCors(environment.cors);
 
   await app.listen(3000);
 }
