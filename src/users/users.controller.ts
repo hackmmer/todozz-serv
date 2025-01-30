@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Req,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -13,7 +23,9 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
+  find(@Req() req: Request) {
+    if (req.headers.authorization)
+      return this.usersService.getUser(req.headers.authorization);
     return this.usersService.findAll();
   }
 
