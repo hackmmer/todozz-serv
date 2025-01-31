@@ -18,7 +18,8 @@ export class AuthController {
   async logout(@Req() req: Request) {
     const auth = req.headers.authorization;
     if (!auth) return false;
-    return this.authService.logout(auth) ?? false;
+    const r = await this.authService.logout(auth);
+    return { status: !!r };
   }
 
   @Post('register')

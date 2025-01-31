@@ -1,6 +1,7 @@
 import { Prop, SchemaFactory, Schema as NSchema } from '@nestjs/mongoose';
 import { HydratedDocument, Schema } from 'mongoose';
 import { ITodo } from 'src/todo/entities/todo.entity';
+import { DbTodo } from 'src/todo/schemas/todo.schema';
 import { Helpers } from 'src/utils/helpers/helpers';
 import { IWorkspace } from 'src/workspace/entities/workspace.entity';
 
@@ -8,7 +9,7 @@ export type WorkspaceDocument = HydratedDocument<DbWorkspace>;
 
 @NSchema()
 export class DbWorkspace implements IWorkspace {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   token: string;
 
   @Prop({ required: true })
@@ -17,7 +18,7 @@ export class DbWorkspace implements IWorkspace {
   @Prop([
     {
       type: Schema.Types.ObjectId,
-      ref: 'Todo',
+      ref: DbTodo.name,
       required: true,
       default: [],
       autopopulate: true,

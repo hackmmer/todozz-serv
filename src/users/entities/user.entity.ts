@@ -6,12 +6,13 @@ export interface IUser {
   profile_image?: string;
   name: string;
   username: string;
-  password: string;
+  password?: string;
   workspaces: IWorkspace[];
   sessions?: string[];
 }
 
 export interface ISession {
+  _id?: string | any;
   key: string;
   user?: IUser;
 }

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { IUser, User } from 'src/users/entities/user.entity';
-import { DbUser } from 'src/users/schemas/user.schema';
+import { IUser } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {
-    const u = await this.usersService.findOne(username);
+    const u = await this.usersService.findOne({ username });
     if (!u) return null;
     if (pass === u.password) {
       const { password, ...result } = u;
@@ -40,8 +39,9 @@ export class AuthService {
 
   async logout(session: string) {
     const key = session.replace('Bearer ', '');
-    await this.usersService.deleteSession({ key });
-    return true;
+    const user = await this.usersService.getUser(session);
+    if (!user) return null;
+    return await this.usersService.deleteSession({ key, user });
   }
 
   async register(user: IUser | any) {

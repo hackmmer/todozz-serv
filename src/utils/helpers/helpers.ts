@@ -5,7 +5,10 @@ export class Helpers {
     // 1. Obtener todos los paths con autopopulate
     const autopopulatePaths: string[] = [];
     schema.eachPath((pathName, path) => {
-      if (path.options.autopopulate) {
+      let options;
+      if (Array.isArray(path.options.type)) options = path.options.type[0];
+      else options = path.options;
+      if (options?.autopopulate) {
         autopopulatePaths.push(pathName);
       }
     });

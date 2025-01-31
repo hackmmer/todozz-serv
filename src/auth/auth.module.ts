@@ -14,7 +14,7 @@ import { UsersModule } from 'src/users/users.module';
     JwtModule.register({
       secret: 'Ly88RWRkeWVkZHkuMTgwMC5CbGl6emVyPiMhCg==',
       signOptions: {
-        expiresIn: '1h',
+        expiresIn: '7d',
       },
     }),
   ],

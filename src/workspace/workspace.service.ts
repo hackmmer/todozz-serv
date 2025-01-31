@@ -1,35 +1,64 @@
+import { UsersService } from 'src/users/users.service';
+import { IUser } from 'src/users/entities/user.entity';
 import { Injectable } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
-import { Workspace } from './entities/workspace.entity';
-import { merge } from 'lodash';
+import { IWorkspace } from './entities/workspace.entity';
+import { DbWorkspace } from './schemas/workspace.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { DbUser } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class WorkspaceService {
+  constructor(
+    @InjectModel(DbWorkspace.name) private workspaceModel: Model<DbWorkspace>,
+    private userService: UsersService,
+  ) {}
 
-  workspaces: Workspace[] = [];
-
-  create(createWorkspaceDto: CreateWorkspaceDto) {
-    return this.workspaces.push(new Workspace(createWorkspaceDto))
+  async create(user: IUser, createWorkspaceDto: CreateWorkspaceDto) {
+    const w = (
+      await this.workspaceModel.create(createWorkspaceDto)
+    ).toObject<IWorkspace>();
+    // user = await this.userService.findOne(user);
+    // user.workspaces.push(w);
+    await this.userService.update(user._id, {
+      workspaces: [w],
+    });
+    return w;
   }
 
-  findAll() {
-    return this.workspaces;
+  async findAll(user: IUser) {
+    return (await this.workspaceModel.find()).map((e) =>
+      e.toObject<IWorkspace>(),
+    );
   }
 
-  findOne(id: string) {
-    return this.workspaces.find(e => e._id === id);
+  async findOne(user: IUser, id: string) {
+    return (
+      await this.workspaceModel.findOne({ token: id })
+    ).toObject<IWorkspace>();
   }
 
-  update(id: string, updateWorkspaceDto: UpdateWorkspaceDto) {
-    const i = this.workspaces.findIndex(e => e._id === id)
-    merge(this.workspaces[i], updateWorkspaceDto)
-    return this.workspaces[i];
+  async update(
+    user: IUser,
+    id: string,
+    updateWorkspaceDto: UpdateWorkspaceDto,
+  ) {
+    const { todos, ...rest } = updateWorkspaceDto;
+    const w = (
+      await this.workspaceModel.findByIdAndUpdate(id, {
+        $set: {
+          ...rest,
+          todos,
+        },
+      })
+    ).toObject<IWorkspace>();
+    return w;
   }
 
-  remove(id: string) {
-    const i = this.workspaces.findIndex(e => e._id === id)
-    const u = this.workspaces.slice(i, i);
-    return u;
+  remove(user: IUser, id: string) {
+    const r = this.workspaceModel.findByIdAndDelete(id);
+    return r;
   }
 }

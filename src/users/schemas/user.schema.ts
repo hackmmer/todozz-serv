@@ -3,7 +3,6 @@ import { HydratedDocument, Schema } from 'mongoose';
 import { IWorkspace } from 'src/workspace/entities/workspace.entity';
 import { IUser } from '../entities/user.entity';
 import { DbWorkspace } from 'src/workspace/schemas/workspace.schema';
-import autopopulate from 'mongoose-autopopulate';
 import { Helpers } from 'src/utils/helpers/helpers';
 
 export type UserDocument = HydratedDocument<DbUser>;
@@ -41,5 +40,6 @@ export class DbUser implements IUser {
   workspaces: IWorkspace[];
 }
 
-export const UserSchema = SchemaFactory.createForClass(DbUser);
-UserSchema.plugin(Helpers.autopopulatePlugin);
+export const UserSchema = SchemaFactory.createForClass(DbUser).plugin(
+  Helpers.autopopulatePlugin,
+);
