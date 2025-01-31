@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Controller('todo')
 export class TodoController {
@@ -29,7 +39,17 @@ export class TodoController {
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
-    return this.todoService.update(id, updateTodoDto);
+    // console.log(updateTodoDto);
+    // return this.todoService.update(id, updateTodoDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('task/:token')
+  updateTask(
+    @Param('token') token: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+  ) {
+    return this.todoService.updateTask(token, updateTaskDto);
   }
 
   @UseGuards(AuthGuard('jwt'))

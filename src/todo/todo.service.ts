@@ -7,6 +7,7 @@ import mongoose, { Model, Schema } from 'mongoose';
 import { DbTodo } from './schemas/todo.schema';
 import { DbTask } from './schemas/task.shcema';
 import { WorkspaceService } from 'src/workspace/workspace.service';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TodoService {
@@ -25,18 +26,28 @@ export class TodoService {
         description: todo.description,
       })
     ).toObject<ITodo>();
+
     todo.checkers.forEach(async (t) => {
       const task = await this.createTask(t);
-      this.addTask(r, task);
-      r.checkers.push(task);
-      return task;
+      await this.addTask(r, task);
     });
+    r.checkers = todo.checkers;
     await this.workspaceService.addTodo(workspace, r);
     return r;
   }
 
   async createTask(task: ITask) {
     return (await this.taskModel.create(task)).toObject();
+  }
+
+  async updateTask(token: string, updateTaskDto: UpdateTaskDto) {
+    return (
+      await this.taskModel.findOneAndUpdate(
+        { token },
+        { ...updateTaskDto },
+        { new: true },
+      )
+    ).toObject();
   }
 
   async addTask(todo: ITodo, task: ITask) {
