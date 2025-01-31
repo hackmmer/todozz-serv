@@ -27,7 +27,7 @@ export class Helpers {
           const documents = Array.isArray(docs) ? docs : [docs];
 
           await Promise.all(
-            documents.map(async (doc) => await doc.populate(populateOptions)),
+            documents.map(async (doc) => await doc?.populate(populateOptions)),
           );
 
           next();

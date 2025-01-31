@@ -7,6 +7,4 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   profile_image?: string;
   name?: string;
   password?: string;
-  workspaces?: (IWorkspace | string)[];
-  sessions?: (ISession | string)[];
 }

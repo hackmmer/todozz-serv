@@ -14,5 +14,6 @@ import { UsersModule } from 'src/users/users.module';
   ],
   controllers: [WorkspaceController],
   providers: [WorkspaceService],
+  exports: [WorkspaceService],
 })
 export class WorkspaceModule {}

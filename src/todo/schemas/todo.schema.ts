@@ -2,6 +2,7 @@ import { Prop, SchemaFactory, Schema as NSchema } from '@nestjs/mongoose';
 import { HydratedDocument, Schema } from 'mongoose';
 import { ITask } from '../entities/todo.entity';
 import { Helpers } from 'src/utils/helpers/helpers';
+import { DbTask } from './task.shcema';
 
 export type TodoDocument = HydratedDocument<DbTodo>;
 
@@ -13,13 +14,13 @@ export class DbTodo {
   @Prop()
   description?: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   token?: string;
 
   @Prop([
     {
       type: Schema.Types.ObjectId,
-      ref: 'Task',
+      ref: DbTask.name,
       required: true,
       default: [],
       autopopulate: true,
@@ -28,5 +29,6 @@ export class DbTodo {
   checkers: ITask[];
 }
 
-export const TodoSchema = SchemaFactory.createForClass(DbTodo);
-TodoSchema.plugin(Helpers.autopopulatePlugin);
+export const TodoSchema = SchemaFactory.createForClass(DbTodo).plugin(
+  Helpers.autopopulatePlugin,
+);

@@ -1,7 +1,7 @@
 import { merge } from 'lodash';
 
 export interface ITodo {
-  _id?: string;
+  _id?: string | any;
   title: string;
   description?: string;
   token?: string;
@@ -9,7 +9,7 @@ export interface ITodo {
 }
 
 export interface ITask {
-  _id?: string;
+  _id?: string | any;
   text: string;
   value: boolean;
   token?: string;

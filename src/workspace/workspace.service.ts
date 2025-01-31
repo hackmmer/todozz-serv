@@ -6,8 +6,8 @@ import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { IWorkspace } from './entities/workspace.entity';
 import { DbWorkspace } from './schemas/workspace.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { DbUser } from 'src/users/schemas/user.schema';
+import mongoose, { Model } from 'mongoose';
+import { ITodo } from 'src/todo/entities/todo.entity';
 
 @Injectable()
 export class WorkspaceService {
@@ -20,11 +20,7 @@ export class WorkspaceService {
     const w = (
       await this.workspaceModel.create(createWorkspaceDto)
     ).toObject<IWorkspace>();
-    // user = await this.userService.findOne(user);
-    // user.workspaces.push(w);
-    await this.userService.update(user._id, {
-      workspaces: [w],
-    });
+    await this.userService.addWorkspace(user, w);
     return w;
   }
 
@@ -60,5 +56,22 @@ export class WorkspaceService {
   remove(user: IUser, id: string) {
     const r = this.workspaceModel.findByIdAndDelete(id);
     return r;
+  }
+
+  async addTodo(workspace: IWorkspace | string, todo: ITodo) {
+    const tk = typeof workspace === 'string' ? workspace : workspace._id;
+    const w = await this.workspaceModel
+      .updateOne(
+        {
+          token: tk,
+        },
+        {
+          $push: {
+            todos: new mongoose.Types.ObjectId(todo._id),
+          },
+        },
+      )
+      .lean();
+    return w;
   }
 }

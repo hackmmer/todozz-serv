@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { DbUser } from './schemas/user.schema';
 import mongoose, { Model } from 'mongoose';
 import { Session } from './schemas/sessions.schema';
+import { IWorkspace } from 'src/workspace/entities/workspace.entity';
 
 @Injectable()
 export class UsersService {
@@ -46,15 +47,46 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     // const i = this.users.findIndex((e) => e._id === id);
     // merge(this.users[i], updateUserDto);
-    const { workspaces, sessions, ...rest } = updateUserDto;
     const u = await this.userModel.findByIdAndUpdate(id, {
-      ...rest,
-      $addToSet: {
-        sessions,
-        workspaces,
-      },
+      ...updateUserDto,
     });
     return u.toObject();
+  }
+
+  async addWorkspace(user: IUser, w: IWorkspace | string) {
+    const _id =
+      typeof w === 'string' ? new mongoose.Schema.Types.ObjectId(w) : w._id;
+    const _u_id =
+      typeof w === 'string'
+        ? new mongoose.Schema.Types.ObjectId(user._id)
+        : user._id;
+    const u = await this.userModel.findOneAndUpdate(
+      {
+        $or: [{ _id: _u_id }, { username: user.username }],
+      },
+      {
+        $push: {
+          workspaces: _id,
+        },
+      },
+    );
+    return u;
+  }
+
+  async addSession(user: IUser, s: ISession | string) {
+    const _id =
+      typeof s === 'string' ? new mongoose.Schema.Types.ObjectId(s) : s._id;
+    const u = await this.userModel.findOneAndUpdate(
+      {
+        $or: [{ _id }, { username: user.username }],
+      },
+      {
+        $push: {
+          sessions: new mongoose.Schema.Types.ObjectId(_id),
+        },
+      },
+    );
+    return u;
   }
 
   async remove(id: string) {
@@ -64,9 +96,7 @@ export class UsersService {
 
   async createSession(session: ISession) {
     const r = await this.sessionsModel.create(session);
-    this.update(session.user._id, {
-      sessions: [r.toJSON<ISession>().key],
-    });
+    this.addSession(session.user, r);
     return r.toObject<ISession>();
   }
 

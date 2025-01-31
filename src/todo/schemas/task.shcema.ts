@@ -12,9 +12,10 @@ export class DbTask {
   @Prop({ required: true, default: false })
   value: boolean;
 
-  @Prop()
+  @Prop({ required: true, unique: true })
   token?: string;
 }
 
-export const TaskSchema = SchemaFactory.createForClass(DbTask);
-TaskSchema.plugin(Helpers.autopopulatePlugin);
+export const TaskSchema = SchemaFactory.createForClass(DbTask).plugin(
+  Helpers.autopopulatePlugin,
+);

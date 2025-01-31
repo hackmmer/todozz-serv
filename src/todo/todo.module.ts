@@ -4,6 +4,7 @@ import { TodoController } from './todo.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DbTodo, TodoSchema } from './schemas/todo.schema';
 import { DbTask, TaskSchema } from './schemas/task.shcema';
+import { WorkspaceModule } from 'src/workspace/workspace.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { DbTask, TaskSchema } from './schemas/task.shcema';
       { name: DbTodo.name, schema: TodoSchema },
       { name: DbTask.name, schema: TaskSchema },
     ]),
+    WorkspaceModule,
   ],
   controllers: [TodoController],
   providers: [TodoService],
