@@ -1,6 +1,7 @@
+import { TodoService } from './../todo/todo.service';
 import { UsersService } from 'src/users/users.service';
 import { IUser } from 'src/users/entities/user.entity';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { IWorkspace } from './entities/workspace.entity';
@@ -14,6 +15,8 @@ export class WorkspaceService {
   constructor(
     @InjectModel(DbWorkspace.name) private workspaceModel: Model<DbWorkspace>,
     private userService: UsersService,
+    @Inject(forwardRef(() => TodoService))
+    private todoService: TodoService,
   ) {}
 
   async create(user: IUser, createWorkspaceDto: CreateWorkspaceDto) {
@@ -30,10 +33,10 @@ export class WorkspaceService {
     );
   }
 
-  async findOne(user: IUser, id: string) {
+  async findOne(user: IUser, token: string) {
     return (
-      await this.workspaceModel.findOne({ token: id })
-    ).toObject<IWorkspace>();
+      await this.workspaceModel.findOne({ token: token })
+    )?.toObject<IWorkspace>();
   }
 
   async update(
@@ -53,9 +56,22 @@ export class WorkspaceService {
     return w;
   }
 
-  remove(user: IUser, id: string) {
-    const r = this.workspaceModel.findByIdAndDelete(id);
-    return r;
+  async remove(user: IUser, token: string) {
+    // const _w_id = typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id;
+
+    const w = // await this.workspaceModel.findOneAndDelete({ _id: _w_id })
+      (await this.workspaceModel.findOne({ token })).toJSON<IWorkspace>();
+    if (!this.userService.hasWorkspace(user, w)) return {}; // error
+
+    await this.workspaceModel.deleteOne({
+      token,
+    });
+
+    w.todos.forEach(async (_t) => {
+      await this.todoService.remove(_t.token);
+    });
+
+    return w;
   }
 
   async addTodo(workspace: IWorkspace | string, todo: ITodo) {

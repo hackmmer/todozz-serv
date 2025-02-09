@@ -54,12 +54,9 @@ export class UsersService {
   }
 
   async addWorkspace(user: IUser, w: IWorkspace | string) {
-    const _id =
-      typeof w === 'string' ? new mongoose.Schema.Types.ObjectId(w) : w._id;
+    const _id = typeof w === 'string' ? new mongoose.Types.ObjectId(w) : w._id;
     const _u_id =
-      typeof w === 'string'
-        ? new mongoose.Schema.Types.ObjectId(user._id)
-        : user._id;
+      typeof w === 'string' ? new mongoose.Types.ObjectId(user._id) : user._id;
     const u = await this.userModel.findOneAndUpdate(
       {
         $or: [{ _id: _u_id }, { username: user.username }],
@@ -73,16 +70,24 @@ export class UsersService {
     return u;
   }
 
+  async hasWorkspace(user: IUser, w: IWorkspace | string) {
+    const u = await this.findOne(user);
+    const _w_id = typeof w === 'string' ? w : w._id;
+    u.workspaces.some((_w) => _w._id === _w_id);
+    return true;
+  }
+
   async addSession(user: IUser, s: ISession | string) {
-    const _id =
-      typeof s === 'string' ? new mongoose.Schema.Types.ObjectId(s) : s._id;
+    const _id = typeof s === 'string' ? new mongoose.Types.ObjectId(s) : s._id;
+    const _u_id =
+      typeof s === 'string' ? new mongoose.Types.ObjectId(user._id) : user._id;
     const u = await this.userModel.findOneAndUpdate(
       {
-        $or: [{ _id }, { username: user.username }],
+        $or: [{ _id: _u_id }, { username: user.username }],
       },
       {
         $push: {
-          sessions: new mongoose.Schema.Types.ObjectId(_id),
+          sessions: _id,
         },
       },
     );

@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { IUser } from './../users/entities/user.entity';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Todo, ITodo, Task, ITask } from './entities/todo.entity';
-import mongoose, { Model, Schema } from 'mongoose';
+import { ITodo, ITask } from './entities/todo.entity';
+import mongoose, { Model } from 'mongoose';
 import { DbTodo } from './schemas/todo.schema';
 import { DbTask } from './schemas/task.shcema';
 import { WorkspaceService } from 'src/workspace/workspace.service';
@@ -14,11 +15,20 @@ export class TodoService {
   constructor(
     @InjectModel(DbTodo.name) private todoModel: Model<DbTodo>,
     @InjectModel(DbTask.name) private taskModel: Model<DbTask>,
+    @Inject(forwardRef(() => WorkspaceService))
     private workspaceService: WorkspaceService,
   ) {}
 
-  async create(createTodoDto: CreateTodoDto) {
+  async create(user: IUser, createTodoDto: CreateTodoDto) {
     const { workspace, ...todo } = createTodoDto;
+    if (
+      !(await this.workspaceService.findOne(
+        user,
+        typeof workspace === 'string' ? workspace : workspace.token,
+      ))
+    ) {
+      return {}; // error
+    }
     const r = (
       await this.todoModel.create({
         title: todo.title,
@@ -53,7 +63,7 @@ export class TodoService {
   async addTask(todo: ITodo, task: ITask) {
     const _id =
       typeof todo._id === 'string'
-        ? new mongoose.Schema.Types.ObjectId(todo._id)
+        ? new mongoose.Types.ObjectId(todo._id)
         : todo._id;
     const r = this.todoModel.findOneAndUpdate(
       {
@@ -85,9 +95,20 @@ export class TodoService {
     // return this.todos[i];
   }
 
-  remove(id: string) {
-    // const i = this.todos.findIndex((e) => e._id === id);
-    // const u = this.todos.slice(i, i);
-    // return u;
+  async remove(t: ITodo | string) {
+    const _token = typeof t === 'string' ? t : t.token;
+    const todo = (
+      await this.todoModel.findOneAndDelete({
+        token: _token,
+      })
+    ).toJSON<ITodo>();
+
+    todo.checkers.forEach(async (task) => {
+      await this.taskModel.deleteOne({
+        token: task.token,
+      });
+    });
+
+    return todo;
   }
 }

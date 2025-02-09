@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { Request } from 'express';
+import { IUser } from 'src/users/entities/user.entity';
 
 @Controller('todo')
 export class TodoController {
@@ -20,8 +23,8 @@ export class TodoController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  create(@Body() createTodoDto: CreateTodoDto) {
-    return this.todoService.create(createTodoDto);
+  create(@Req() req: Request, @Body() createTodoDto: CreateTodoDto) {
+    return this.todoService.create(req.user as IUser, createTodoDto);
   }
 
   @UseGuards(AuthGuard('jwt'))
