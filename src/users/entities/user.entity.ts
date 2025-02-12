@@ -1,8 +1,9 @@
 import { merge } from 'lodash';
+import mongoose from 'mongoose';
 import { IWorkspace, Workspace } from 'src/workspace/entities/workspace.entity';
 
 export interface IUser {
-  _id?: string | any;
+  _id?: string | mongoose.Types.ObjectId;
   profile_image?: string;
   name: string;
   username: string;
@@ -12,7 +13,7 @@ export interface IUser {
 }
 
 export interface ISession {
-  _id?: string | any;
+  _id?: string | mongoose.Types.ObjectId;
   key: string;
   user?: IUser;
 }

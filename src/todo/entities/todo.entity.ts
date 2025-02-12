@@ -1,7 +1,8 @@
 import { merge } from 'lodash';
+import mongoose from 'mongoose';
 
 export interface ITodo {
-  _id?: string | any;
+  _id?: string | mongoose.Types.ObjectId;
   title: string;
   description?: string;
   token?: string;
@@ -9,7 +10,7 @@ export interface ITodo {
 }
 
 export interface ITask {
-  _id?: string | any;
+  _id?: string | mongoose.Types.ObjectId;
   text: string;
   value: boolean;
   token?: string;

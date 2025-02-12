@@ -1,4 +1,6 @@
 import { Schema, Document } from 'mongoose';
+import { randomBytes } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 export class Helpers {
   static async autopopulatePlugin(schema: Schema) {
@@ -58,5 +60,10 @@ export class Helpers {
         next(error as Error);
       }
     });
+  }
+
+  static generateShareToken(useUUID?: boolean) {
+    if (useUUID) return uuidv4();
+    return randomBytes(32).toString('hex'); // 64 caracteres, seguro
   }
 }

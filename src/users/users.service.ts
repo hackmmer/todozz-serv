@@ -23,7 +23,7 @@ export class UsersService {
     return (await this.userModel.find()).map((e) => e.toObject<IUser>());
   }
 
-  async findOne(options: { _id?: string; username?: string }) {
+  async findOne(options: { _id?: string; username?: string } | IUser) {
     return (
       await this.userModel.findOne({
         $or: [

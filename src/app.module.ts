@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { environment } from './environments/environment';
+import { ShareModule } from './share/share.module';
 
 const routes: Routes = [
   {
@@ -27,6 +28,10 @@ const routes: Routes = [
     path: 'api/',
     module: AuthModule,
   },
+  {
+    path: 'api/',
+    module: ShareModule,
+  },
 ];
 
 @Module({
@@ -34,6 +39,7 @@ const routes: Routes = [
     UsersModule,
     TodoModule,
     WorkspaceModule,
+    ShareModule,
     RouterModule.register(routes),
     MongooseModule.forRoot(
       environment.database.url,
