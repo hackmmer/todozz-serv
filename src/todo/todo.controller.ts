@@ -36,7 +36,7 @@ export class TodoController {
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.todoService.findOne(id);
+    return this.todoService.findOneTask(id);
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -17,7 +17,7 @@ export class TodoService {
     @InjectModel(DbTask.name) private taskModel: Model<DbTask>,
     @Inject(forwardRef(() => WorkspaceService))
     private workspaceService: WorkspaceService,
-  ) { }
+  ) {}
 
   async create(user: IUser, createTodoDto: CreateTodoDto) {
     const { workspace, ...todo } = createTodoDto;
@@ -54,16 +54,18 @@ export class TodoService {
 
   async updateTask(token: string, updateTaskDto: UpdateTaskDto) {
     return (
-      await this.taskModel.findOneAndUpdate(
-        { token },
-        {
-          ...updateTaskDto,
-        },
-        { new: true },
-      )
-    )?.toObject() ?? {
-      error: `Task not Found with token ${token}!`,
-    };
+      (
+        await this.taskModel.findOneAndUpdate(
+          { token },
+          {
+            ...updateTaskDto,
+          },
+          { new: true },
+        )
+      )?.toObject() ?? {
+        error: `Task not Found with token ${token}!`,
+      }
+    );
   }
 
   async addTask(todo: ITodo, task: ITask) {
@@ -71,52 +73,89 @@ export class TodoService {
       typeof todo._id === 'string'
         ? new mongoose.Types.ObjectId(todo._id)
         : todo._id;
-    const r = this.todoModel.findOneAndUpdate(
+    const r = await this.todoModel.findOneAndUpdate(
+      { $or: [{ _id }, { token: todo.token }] },
       {
-        $or: [{ _id }, { token: todo.token }],
-      },
-      {
-        $push: {
-          checkers: task,
+        $addToSet: {
+          // Evita duplicados basado en el _id de la tarea
+          checkers: {
+            $each: [task],
+          },
         },
       },
-      {
-        new: true,
-      },
+      { new: true },
     );
-    return (await r)?.toObject() ?? {
-      error: 'Todo not Found!',
-    };
+    return r?.toObject() ?? { error: 'Todo not Found!' };
   }
 
   findAll() {
     // return this.todos;
   }
 
-  findOne(id: string) {
+  async findOneTask(id: string) {
     // return this.todos.find((e) => e._id === id);
+    return (
+      await this.taskModel.findOne({
+        token: id,
+      })
+    )?.toJSON<ITask>();
   }
 
   async update(id: string, updateTodoDto: UpdateTodoDto) {
-    const { checkers, ...rest } = updateTodoDto
-    const t = (await this.todoModel.findOneAndUpdate({
-      token: id
-    }, {
-      $set: {
-        ...rest,
+    const { checkers = [], ...rest } = updateTodoDto; // Asegurar array vacío por defecto
+    let updatedTodo: ITodo;
+
+    try {
+      // 1. Actualizar campos básicos del Todo
+      updatedTodo = (
+        await this.todoModel.findOneAndUpdate(
+          { token: id },
+          { $set: { ...rest } },
+          { new: true },
+        )
+      )?.toJSON<ITodo>();
+
+      if (!updatedTodo) {
+        throw new Error(`Todo not found with token ${id}`);
       }
-    }, {
-      new: true
-    })).toJSON<ITodo>();
 
-    checkers.forEach(async (task) => {
-      console.log(await this.updateTask(task.token, task))
-      console.log(await this.addTask(t, task))
-    })
+      // 2. Procesar checkers (crear/actualizar)
+      const taskOperations = checkers.map(async (task) => {
+        let taskResult: ITask;
+        const taskExists = await this.findOneTask(task.token);
 
-    return t ?? {
-      error: `Todo not Found with token ${id}!`,
-    };
+        // Actualizar tarea existente
+        if (!!taskExists) {
+          const existingTask = await this.updateTask(task.token, task);
+          if ('error' in existingTask) {
+            throw new Error(`Failed to update task: ${existingTask.error}`);
+          }
+          taskResult = existingTask;
+        }
+        // Crear nueva tarea
+        else {
+          taskResult = await this.createTask(task);
+        }
+
+        // 3. Vincular tarea al Todo (evitar duplicados)
+        await this.addTask(updatedTodo, taskResult);
+        return taskResult;
+      });
+
+      // Ejecutar todas las operaciones en paralelo
+      const processedTasks = await Promise.all(taskOperations);
+
+      // 4. Actualizar referencia de checkers (opcional)
+      updatedTodo.checkers = processedTasks;
+    } catch (error) {
+      // Manejo centralizado de errores
+      return {
+        error: error.message || 'Failed to update todo',
+        details: error.stack,
+      };
+    }
+
+    return updatedTodo;
   }
 
   async remove(t: ITodo | string) {
