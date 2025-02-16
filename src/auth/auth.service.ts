@@ -12,7 +12,7 @@ export class AuthService {
 
   async validateUser(username: string, pass: string): Promise<any> {
     const u = await this.usersService.findOne({ username });
-    if (!u) return null;
+    if ('error' in u) return null;
     if (pass === u.password) {
       const { password, ...result } = u;
       return result;
@@ -40,7 +40,7 @@ export class AuthService {
   async logout(session: string) {
     const key = session.replace('Bearer ', '');
     const user = await this.usersService.getUser(session);
-    if (!user) return null;
+    if ('error' in user) return null;
     return await this.usersService.deleteSession({ key, user });
   }
 

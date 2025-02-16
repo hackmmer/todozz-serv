@@ -17,7 +17,9 @@ export class ShareService {
         token: tk,
       })
     )?.toJSON<IShare>();
-    return r?.workspace ?? {};
+    return r?.workspace ?? {
+      error: 'Reference not Found!',
+    };
   }
 
   async createLink(user: IUser, wk: IWorkspace) {

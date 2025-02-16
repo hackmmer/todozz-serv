@@ -10,7 +10,7 @@ export const environment = {
   },
 
   cors: {
-    origin: 'https://localhost:4200',
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   },

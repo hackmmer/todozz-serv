@@ -42,8 +42,7 @@ export class TodoController {
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
-    // console.log(updateTodoDto);
-    // return this.todoService.update(id, updateTodoDto);
+    return this.todoService.update(id, updateTodoDto);
   }
 
   @UseGuards(AuthGuard('jwt'))

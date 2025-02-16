@@ -17,26 +17,32 @@ export class WorkspaceService {
     private userService: UsersService,
     @Inject(forwardRef(() => TodoService))
     private todoService: TodoService,
-  ) {}
+  ) { }
 
   async create(user: IUser, createWorkspaceDto: CreateWorkspaceDto) {
     const w = (
       await this.workspaceModel.create(createWorkspaceDto)
-    ).toObject<IWorkspace>();
+    )?.toObject<IWorkspace>() ?? {
+      error: 'User not Found!',
+    };
+    if ('error' in w)
+      return w;
     await this.userService.addWorkspace(user, w);
     return w;
   }
 
   async findAll(user: IUser) {
     return (await this.workspaceModel.find()).map((e) =>
-      e.toObject<IWorkspace>(),
-    );
+      e?.toObject<IWorkspace>(),
+    ).filter(e => !!e);
   }
 
   async findOne(user: IUser, token: string) {
     return (
       await this.workspaceModel.findOne({ token: token })
-    )?.toObject<IWorkspace>();
+    )?.toObject<IWorkspace>() ?? {
+      error: 'Workspace not Found!',
+    };
   }
 
   async update(
@@ -52,7 +58,9 @@ export class WorkspaceService {
           todos,
         },
       })
-    ).toObject<IWorkspace>();
+    )?.toObject<IWorkspace>() ?? {
+      error: 'Workspace not Found!',
+    };
     return w;
   }
 
@@ -60,8 +68,14 @@ export class WorkspaceService {
     // const _w_id = typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id;
 
     const w = // await this.workspaceModel.findOneAndDelete({ _id: _w_id })
-      (await this.workspaceModel.findOne({ token })).toJSON<IWorkspace>();
-    if (!this.userService.hasWorkspace(user, w)) return {}; // error
+      (await this.workspaceModel.findOne({ token }))?.toJSON<IWorkspace>() ?? {
+        error: 'Workspace not Found!',
+      };
+
+    if ('error' in w) return w;
+    if (!this.userService.hasWorkspace(user, w)) return {
+      error: `Workspace not Found in user ${user.username}!`,
+    }; // error
 
     await this.workspaceModel.deleteOne({
       token,
@@ -76,7 +90,7 @@ export class WorkspaceService {
 
   async addTodo(workspace: IWorkspace | string, todo: ITodo) {
     const tk = typeof workspace === 'string' ? workspace : workspace._id;
-    const w = await this.workspaceModel
+    const w = (await this.workspaceModel
       .updateOne(
         {
           token: tk,
@@ -86,8 +100,9 @@ export class WorkspaceService {
             todos: new mongoose.Types.ObjectId(todo._id),
           },
         },
-      )
-      .lean();
-    return w;
+      ))
+    return w ?? {
+      error: 'Workspace not Found!',
+    };
   }
 }

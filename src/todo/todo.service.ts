@@ -17,7 +17,7 @@ export class TodoService {
     @InjectModel(DbTask.name) private taskModel: Model<DbTask>,
     @Inject(forwardRef(() => WorkspaceService))
     private workspaceService: WorkspaceService,
-  ) {}
+  ) { }
 
   async create(user: IUser, createTodoDto: CreateTodoDto) {
     const { workspace, ...todo } = createTodoDto;
@@ -27,7 +27,9 @@ export class TodoService {
         typeof workspace === 'string' ? workspace : workspace.token,
       ))
     ) {
-      return {}; // error
+      return {
+        error: 'Workspace not Found!',
+      }; // error
     }
     const r = (
       await this.todoModel.create({
@@ -47,17 +49,21 @@ export class TodoService {
   }
 
   async createTask(task: ITask) {
-    return (await this.taskModel.create(task)).toObject();
+    return (await this.taskModel.create(task)).toObject<ITask>();
   }
 
   async updateTask(token: string, updateTaskDto: UpdateTaskDto) {
     return (
       await this.taskModel.findOneAndUpdate(
         { token },
-        { ...updateTaskDto },
+        {
+          ...updateTaskDto,
+        },
         { new: true },
       )
-    ).toObject();
+    )?.toObject() ?? {
+      error: `Task not Found with token ${token}!`,
+    };
   }
 
   async addTask(todo: ITodo, task: ITask) {
@@ -78,7 +84,9 @@ export class TodoService {
         new: true,
       },
     );
-    return (await r).toObject();
+    return (await r)?.toObject() ?? {
+      error: 'Todo not Found!',
+    };
   }
 
   findAll() {
@@ -89,10 +97,26 @@ export class TodoService {
     // return this.todos.find((e) => e._id === id);
   }
 
-  update(id: string, updateTodoDto: UpdateTodoDto) {
-    // const i = this.todos.findIndex((e) => e._id === id);
-    // merge(this.todos[i], updateTodoDto);
-    // return this.todos[i];
+  async update(id: string, updateTodoDto: UpdateTodoDto) {
+    const { checkers, ...rest } = updateTodoDto
+    const t = (await this.todoModel.findOneAndUpdate({
+      token: id
+    }, {
+      $set: {
+        ...rest,
+      }
+    }, {
+      new: true
+    })).toJSON<ITodo>();
+
+    checkers.forEach(async (task) => {
+      console.log(await this.updateTask(task.token, task))
+      console.log(await this.addTask(t, task))
+    })
+
+    return t ?? {
+      error: `Todo not Found with token ${id}!`,
+    };
   }
 
   async remove(t: ITodo | string) {
@@ -101,7 +125,11 @@ export class TodoService {
       await this.todoModel.findOneAndDelete({
         token: _token,
       })
-    ).toJSON<ITodo>();
+    )?.toJSON<ITodo>() ?? {
+      error: 'Todo not Found!',
+    };
+
+    if ('error' in todo) return todo;
 
     todo.checkers.forEach(async (task) => {
       await this.taskModel.deleteOne({

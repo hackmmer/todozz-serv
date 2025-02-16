@@ -20,7 +20,7 @@ export class UsersService {
   }
 
   async findAll() {
-    return (await this.userModel.find()).map((e) => e.toObject<IUser>());
+    return (await this.userModel.find()).map((e) => e.toObject<IUser>()).filter(e => !!e);
   }
 
   async findOne(options: { _id?: string; username?: string } | IUser) {
@@ -31,7 +31,9 @@ export class UsersService {
           { username: options?.username },
         ],
       })
-    ).toObject<IUser>();
+    )?.toObject<IUser>() ?? {
+      error: 'User not Found!',
+    };
   }
 
   async getUser(sessionKey: string) {
@@ -39,7 +41,9 @@ export class UsersService {
     const session = (
       await this.sessionsModel.findOne({ key })
     )?.toObject<ISession>();
-    if (!session) return null;
+    if (!session) return {
+      error: 'Session not Found!',
+    };;
     const { password, ...user } = session.user;
     return await this.findOne(user);
   }
@@ -49,8 +53,12 @@ export class UsersService {
     // merge(this.users[i], updateUserDto);
     const u = await this.userModel.findByIdAndUpdate(id, {
       ...updateUserDto,
+    }, {
+      new: true
     });
-    return u.toObject();
+    return u?.toObject() ?? {
+      error: 'User not Found!',
+    };
   }
 
   async addWorkspace(user: IUser, w: IWorkspace | string) {
@@ -66,13 +74,20 @@ export class UsersService {
           workspaces: _id,
         },
       },
+      {
+        new: true
+      }
     );
-    return u;
+    return u?.toJSON<IUser>() ?? {
+      error: 'User not Found!',
+    };
   }
 
   async hasWorkspace(user: IUser, w: IWorkspace | string) {
     const u = await this.findOne(user);
     const _w_id = typeof w === 'string' ? w : w._id;
+    if ('error' in u)
+      return u;
     u.workspaces.some((_w) => _w._id === _w_id);
     return true;
   }
@@ -90,28 +105,39 @@ export class UsersService {
           sessions: _id,
         },
       },
+      {
+        new: true
+      }
     );
-    return u;
+    return u ?? {
+      error: 'User not Found!',
+    };;
   }
 
   async remove(id: string) {
-    const u = (await this.userModel.findByIdAndDelete(id)).toObject<IUser>();
+    const u = (await this.userModel.findByIdAndDelete(id))?.toObject<IUser>() ?? {
+      error: 'User not Found!',
+    };
     return u;
   }
 
   async createSession(session: ISession) {
     const r = await this.sessionsModel.create(session);
     this.addSession(session.user, r);
-    return r.toObject<ISession>();
+    return r?.toObject<ISession>() ?? {
+      error: 'User not Found!',
+    };;
   }
 
   async findSession(session: ISession) {
-    return await this.sessionsModel.findOne({
+    return (await this.sessionsModel.findOne({
       key: session,
       user: {
         username: session.user.username,
       },
-    });
+    }))?.toJSON<ISession> ?? {
+      error: 'Session not Found!',
+    };
   }
 
   async deleteSession(session: ISession) {
@@ -127,8 +153,10 @@ export class UsersService {
         },
       },
     );
-    return await this.sessionsModel.deleteOne({
+    return (await this.sessionsModel.deleteOne({
       key: s,
-    });
+    })) ?? {
+      error: 'Session not Found!',
+    };
   }
 }
