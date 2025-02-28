@@ -119,6 +119,13 @@ export class TodoService {
         throw new Error(`Todo not found with token ${id}`);
       }
 
+      // Capturar tokens existentes y nuevos
+      const existingTokens = updatedTodo.checkers.map((t) => t.token);
+      const newTokens = checkers.map((t) => t.token);
+      const tokensToDelete = existingTokens.filter(
+        (token) => !newTokens.includes(token),
+      );
+
       // 2. Procesar checkers (crear/actualizar)
       const taskOperations = checkers.map(async (task) => {
         let taskResult: ITask;
@@ -137,15 +144,25 @@ export class TodoService {
           taskResult = await this.createTask(task);
         }
 
-        // 3. Vincular tarea al Todo (evitar duplicados)
         await this.addTask(updatedTodo, taskResult);
         return taskResult;
       });
 
-      // Ejecutar todas las operaciones en paralelo
       const processedTasks = await Promise.all(taskOperations);
 
-      // 4. Actualizar referencia de checkers (opcional)
+      // 3. Actualizar la lista de checkers del Todo con las tareas procesadas
+      await this.todoModel.findOneAndUpdate(
+        { token: id },
+        { $set: { checkers: processedTasks } },
+        { new: true },
+      );
+
+      // 4. Eliminar tareas que ya no están en la lista
+      if (tokensToDelete.length > 0) {
+        await this.taskModel.deleteMany({ token: { $in: tokensToDelete } });
+      }
+
+      // Actualizar la referencia local de checkers
       updatedTodo.checkers = processedTasks;
     } catch (error) {
       // Manejo centralizado de errores
