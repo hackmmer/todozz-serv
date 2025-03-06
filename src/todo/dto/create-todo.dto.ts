@@ -1,6 +1,7 @@
 import { IWorkspace } from 'src/workspace/entities/workspace.entity';
 import { ITask } from '../entities/todo.entity';
 import {
+  IsArray,
   IsObject,
   IsOptional,
   IsString,
@@ -8,15 +9,7 @@ import {
 } from 'class-validator';
 
 export class CreateTodoDto {
-  @IsObject({
-    always: false,
-    message: 'Workspace should be a workspace or string',
-  })
-  @IsString({
-    always: false,
-    message: 'Workspace should be a workspace or string',
-  })
-  @IsOptional()
+  @IsString()
   workspace: IWorkspace | string;
 
   @IsString()
@@ -31,6 +24,7 @@ export class CreateTodoDto {
   token?: string;
 
   @ValidateNested({ each: true })
+  @IsArray()
   @IsOptional()
   checkers?: ITask[];
 }
